@@ -3,6 +3,7 @@ import { useState } from 'react'
 import '../styles/tasklist.scss'
 
 import { FiTrash, FiCheckSquare } from 'react-icons/fi'
+import { tsExternalModuleReference } from '@babel/types';
 
 interface Task {
   id: number;
@@ -16,14 +17,45 @@ export function TaskList() {
 
   function handleCreateNewTask() {
     // Crie uma nova task com um id random, não permita criar caso o título seja vazio.
+    if (!newTaskTitle){
+      return;
+    }
+
+    let id = 0;
+    do {
+      id = Math.random();
+    } while (tasks.find(e => e.id == id))
+
+    const newTask:Task = {
+      title: newTaskTitle,
+      isComplete: false,
+      id
+    };
+
+    setTasks(tasks => [...tasks, newTask]);
+    setNewTaskTitle('');
   }
 
   function handleToggleTaskCompletion(id: number) {
     // Altere entre `true` ou `false` o campo `isComplete` de uma task com dado ID
+    const updatedTasks = tasks.map(t => {
+      return (t.id == id) 
+        ? {...t, isComplete: !t.isComplete}
+        : t;
+    });
+
+    setTasks(updatedTasks)
   }
 
   function handleRemoveTask(id: number) {
     // Remova uma task da listagem pelo ID
+    const updatedTasks = tasks.filter(t => t.id != id);
+    setTasks(updatedTasks);
+  }
+
+  function submitTask(e){
+    setNewTaskTitle(e.target.value);
+    handleCreateNewTask();
   }
 
   return (
@@ -36,6 +68,7 @@ export function TaskList() {
             type="text" 
             placeholder="Adicionar novo todo" 
             onChange={(e) => setNewTaskTitle(e.target.value)}
+            onKeyUp={(e) => e.key == 'Enter' ? submitTask(e) : null}
             value={newTaskTitle}
           />
           <button type="submit" data-testid="add-task-button" onClick={handleCreateNewTask}>
